@@ -1,36 +1,44 @@
 ﻿using EmbedIO;
 using EmbedIO.Actions;
+using Microsoft.Extensions.Hosting;
 using Swan.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace UrlRedirect {
     class Program {
-        static Dictionary<string, string> redirects = new Dictionary<string, string>();
+        static Dictionary<string, string> Redirects = new Dictionary<string, string>();
 
         static void Main(string[] args) {
+            MainAsync(args).GetAwaiter().GetResult();
+        }
+
+        static async Task MainAsync(string[] args) {
             var baseUrl = "myvtmi.im";
 
             if (args.Length > 0)
                 baseUrl = args[0];
 
             UpdateRedirects();
-            
-            // Our web server is disposable.
-            using (var server = CreateWebServer(baseUrl)) {
-                // Once we've registered our modules and configured them, we call the RunAsync() method.
-                server.RunAsync();
 
-                // Wait for any key to be pressed before disposing of our web server.
-                // In a service, we'd manage the lifecycle of our web server using
-                // something like a BackgroundWorker or a ManualResetEvent.
-                Console.Read();
-            }
+            var hostBuilder = new HostBuilder()
+                .ConfigureServices((hostContext, services) => {                    
+
+                    using (var server = CreateWebServer(baseUrl)) {
+                        
+                        server.RunAsync();
+
+                    }
+
+                });
+
+            await hostBuilder.RunConsoleAsync();
         }
 
-        private static void UpdateRedirects() {            
+        private static void UpdateRedirects() {
             Console.WriteLine("Loading URLs\n");
 
             var updates = 0;
@@ -44,19 +52,19 @@ namespace UrlRedirect {
 
             using (var connection = new SqlConnection(connectionString)) {
                 var cmd = connection.CreateCommand();
-                cmd.CommandText ="SELECT [url], [target] FROM URL where URL_TYPE = 1";
+                cmd.CommandText = "SELECT [url], [target] FROM URL where URL_TYPE = 1";
 
                 connection.Open();
                 SqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read()) {
                     var url = reader["url"].ToString().Trim();
                     var target = reader["target"].ToString().Trim();
-                    
-                    if (!redirects.ContainsKey(url)) {
-                        redirects.Add(url, target);
+
+                    if (!Redirects.ContainsKey(url)) {
+                        Redirects.Add(url, target);
                         inserts++;
-                    } else if(redirects[url] != target) {
-                        redirects[url] = target;
+                    } else if (Redirects[url] != target) {
+                        Redirects[url] = target;
                         updates++;
                     }
                 }
@@ -64,13 +72,13 @@ namespace UrlRedirect {
                 connection.Close();
             }
 
-            if(inserts > 0)
+            if (inserts > 0)
                 Console.WriteLine($"Loaded {inserts} URLs\n");
 
             if (updates > 0)
                 Console.WriteLine($"Updated {updates} URLs\n");
 
-            if(inserts == 0 && updates == 0)
+            if (inserts == 0 && updates == 0)
                 Console.WriteLine($"Nothing changed\n");
         }
 
@@ -79,23 +87,23 @@ namespace UrlRedirect {
             var server = new WebServer(o => o
                 .WithUrlPrefix($"http://*:{Environment.GetEnvironmentVariable("PORT")}")
                 .WithMode(HttpListenerMode.EmbedIO))
-                .WithModule(new ActionModule("/update", HttpVerbs.Any, 
+                .WithModule(new ActionModule("/update", HttpVerbs.Any,
                     ctx => {
                         UpdateRedirects();
                         return ctx.SendStringAsync("Updated!", "text", Encoding.ASCII);
                     })
                 ).WithModule(new ActionModule("/", HttpVerbs.Any,
                     ctx => {
-                    var requestHost = ctx.Request.Url.Host;
-                    var idx = requestHost.IndexOf($".{baseUrl}");
+                        var requestHost = ctx.Request.Url.Host;
+                        var idx = requestHost.IndexOf($".{baseUrl}");
 
                         var subdomain = idx > 0 ?
                                         requestHost.Substring(0, idx)
                                         : "*";
 
-                        var redirectURL = redirects.ContainsKey(subdomain) ?
-                                            redirects[subdomain]
-                                            : redirects["*"];
+                        var redirectURL = Redirects.ContainsKey(subdomain) ?
+                                            Redirects[subdomain]
+                                            : Redirects["*"];
 
                         ctx.Response.Headers.Add("Location", redirectURL);
 
