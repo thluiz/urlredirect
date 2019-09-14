@@ -52,7 +52,7 @@ namespace UrlRedirect {
                     var url = reader["url"].ToString().Trim();
                     var target = reader["target"].ToString().Trim();
 
-                    Console.WriteLine("Loading \n" + url);
+                    Console.WriteLine("Loading :: " + url);
 
                     if (!redirects.ContainsKey(url)) {
                         redirects.Add(url, target);
@@ -83,6 +83,7 @@ namespace UrlRedirect {
                 .WithMode(HttpListenerMode.EmbedIO))
                 .WithModule(new ActionModule("/update", HttpVerbs.Any, 
                     ctx => {
+                        UpdateRedirects();
                         return ctx.SendStringAsync("Updated!", "text", Encoding.ASCII);
                     })
                 ).WithModule(new ActionModule("/", HttpVerbs.Any,
