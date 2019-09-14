@@ -20,6 +20,10 @@ namespace UrlRedirect {
                 // Once we've registered our modules and configured them, we call the RunAsync() method.
                 server.RunAsync();
 
+                var browser = new System.Diagnostics.Process() {
+                    StartInfo = new System.Diagnostics.ProcessStartInfo($"http://{baseUrl}") { UseShellExecute = true }
+                };
+                browser.Start();
                 // Wait for any key to be pressed before disposing of our web server.
                 // In a service, we'd manage the lifecycle of our web server using
                 // something like a BackgroundWorker or a ManualResetEvent.
