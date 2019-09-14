@@ -26,7 +26,7 @@ namespace UrlRedirect {
                 // Wait for any key to be pressed before disposing of our web server.
                 // In a service, we'd manage the lifecycle of our web server using
                 // something like a BackgroundWorker or a ManualResetEvent.
-                Console.ReadKey(true);
+                Console.Read();
             }
         }
 
@@ -51,9 +51,7 @@ namespace UrlRedirect {
                 while (reader.Read()) {
                     var url = reader["url"].ToString().Trim();
                     var target = reader["target"].ToString().Trim();
-
-                    Console.WriteLine("Loading :: " + url);
-
+                    
                     if (!redirects.ContainsKey(url)) {
                         redirects.Add(url, target);
                         inserts++;
