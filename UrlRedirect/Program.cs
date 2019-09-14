@@ -49,13 +49,15 @@ namespace UrlRedirect {
                 connection.Open();
                 SqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read()) {
-                    var url = reader["url"].ToString();
-                    var target = reader["target"].ToString();
+                    var url = reader["url"].ToString().Trim();
+                    var target = reader["target"].ToString().Trim();
 
-                    if (redirects.ContainsKey(url)) {
+                    Console.WriteLine("Loading \n" + url);
+
+                    if (!redirects.ContainsKey(url)) {
                         redirects.Add(url, target);
                         inserts++;
-                    } else {
+                    } else if(redirects[url] != target) {
                         redirects[url] = target;
                         updates++;
                     }
