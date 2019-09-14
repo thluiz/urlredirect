@@ -84,6 +84,11 @@ namespace UrlRedirect {
             var server = new WebServer(o => o
                 .WithUrlPrefix($"http://*:{Environment.GetEnvironmentVariable("PORT")}")
                 .WithMode(HttpListenerMode.EmbedIO))
+                .WithModule(new ActionModule("/healthcheck", HttpVerbs.Any,
+                    ctx => {                        
+                        return ctx.SendStringAsync("Ok", "text", Encoding.ASCII);
+                    })
+                )
                 .WithModule(new ActionModule("/update", HttpVerbs.Any,
                     ctx => {
                         UpdateRedirects();
