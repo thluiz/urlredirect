@@ -4,19 +4,22 @@ using Swan.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Text;
 
 namespace UrlRedirect {
     class Program {
+        static Dictionary<string, string> redirects = new Dictionary<string, string>();
+
         static void Main(string[] args) {
             var baseUrl = "myvtmi.im";
 
             if (args.Length > 0)
                 baseUrl = args[0];
 
-            var redirects = GetRedirects();
-
+            UpdateRedirects();
+            
             // Our web server is disposable.
-            using (var server = CreateWebServer(baseUrl, redirects)) {
+            using (var server = CreateWebServer(baseUrl)) {
                 // Once we've registered our modules and configured them, we call the RunAsync() method.
                 server.RunAsync();
 
@@ -27,10 +30,11 @@ namespace UrlRedirect {
             }
         }
 
-        private static Dictionary<string, string> GetRedirects() {
-            var resp = new Dictionary<string, string>();
-
+        private static void UpdateRedirects() {            
             Console.WriteLine("Loading URLs\n");
+
+            var updates = 0;
+            var inserts = 0;
 
             string connectionString =
                 $"Data Source={Environment.GetEnvironmentVariable("DB_PATH")};" +
@@ -45,25 +49,41 @@ namespace UrlRedirect {
                 connection.Open();
                 SqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read()) {
-                    //Console.WriteLine($"{reader["CodigoTelefonico"]} {reader["NomePais"]} ({reader["Sigla"]})");
+                    var url = reader["url"].ToString();
+                    var target = reader["target"].ToString();
 
-                    resp.Add(reader["url"].ToString(), reader["target"].ToString());
+                    if (redirects.ContainsKey(url)) {
+                        redirects.Add(url, target);
+                        inserts++;
+                    } else {
+                        redirects[url] = target;
+                        updates++;
+                    }
                 }
 
                 connection.Close();
             }
 
-            Console.WriteLine($"Loaded {resp.Count} URLs\n");
+            if(inserts > 0)
+                Console.WriteLine($"Loaded {inserts} URLs\n");
 
-            return resp;
+            if (updates > 0)
+                Console.WriteLine($"Updated {updates} URLs\n");
+
+            if(inserts == 0 && updates == 0)
+                Console.WriteLine($"Nothing changed\n");
         }
 
         // Create and configure our web server.
-        private static WebServer CreateWebServer(string baseUrl, Dictionary<string, string> redirects) {
+        private static WebServer CreateWebServer(string baseUrl) {
             var server = new WebServer(o => o
                 .WithUrlPrefix($"http://*:{Environment.GetEnvironmentVariable("PORT")}")
                 .WithMode(HttpListenerMode.EmbedIO))
-                .WithModule(new ActionModule("/", HttpVerbs.Any,
+                .WithModule(new ActionModule("/update", HttpVerbs.Any, 
+                    ctx => {
+                        return ctx.SendStringAsync("Updated!", "text", Encoding.ASCII);
+                    })
+                ).WithModule(new ActionModule("/", HttpVerbs.Any,
                     ctx => {
                     var requestHost = ctx.Request.Url.Host;
                     var idx = requestHost.IndexOf($".{baseUrl}");
