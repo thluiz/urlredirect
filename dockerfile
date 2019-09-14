@@ -10,7 +10,7 @@ RUN dotnet restore
 WORKDIR /app/
 COPY UrlRedirect/. ./UrlRedirect/
 WORKDIR /app/UrlRedirect
-RUN dotnet publish -c Release -o out
+RUN dotnet publish -r linux-x64 -c Release -o out
 
 # test application -- see: dotnet-docker-unit-testing.md
 #FROM build AS testrunner

@@ -20,14 +20,10 @@ namespace UrlRedirect {
                 // Once we've registered our modules and configured them, we call the RunAsync() method.
                 server.RunAsync();
 
-                var browser = new System.Diagnostics.Process() {
-                    StartInfo = new System.Diagnostics.ProcessStartInfo($"http://{baseUrl}") { UseShellExecute = true }
-                };
-                browser.Start();
                 // Wait for any key to be pressed before disposing of our web server.
                 // In a service, we'd manage the lifecycle of our web server using
                 // something like a BackgroundWorker or a ManualResetEvent.
-                Console.ReadKey(true);
+                //Console.ReadKey(true);
             }
         }
 
@@ -66,14 +62,14 @@ namespace UrlRedirect {
         private static WebServer CreateWebServer(string baseUrl, Dictionary<string, string> redirects) {
             var server = new WebServer(o => o
                 .WithUrlPrefix($"http://*:{Environment.GetEnvironmentVariable("PORT")}")
-                .WithMode(HttpListenerMode.EmbedIO))                
+                .WithMode(HttpListenerMode.EmbedIO))
                 .WithModule(new ActionModule("/", HttpVerbs.Any,
                     ctx => {
                     var requestHost = ctx.Request.Url.Host;
                     var idx = requestHost.IndexOf($".{baseUrl}");
 
                         var subdomain = idx > 0 ?
-                                        requestHost.Substring(0, idx) 
+                                        requestHost.Substring(0, idx)
                                         : "*";
 
                         var redirectURL = redirects.ContainsKey(subdomain) ?
@@ -87,7 +83,7 @@ namespace UrlRedirect {
                         });
                     })
                 );
-            
+
             server.StateChanged += (s, e) => $"WebServer New State - {e.NewState}".Info();
 
             return server;
