@@ -1,0 +1,15 @@
+{
+  "profiles": {
+    "UrlRedirect": {
+      "commandName": "Project",
+      "commandLineArgs": "localhost:20164",
+      "environmentVariables": {
+        "DB_USER": "SAM",
+        "DB_NAME": "SAM20190906",
+        "DB_PASS": "sam1234",
+        "PORT": "20164",
+        "DB_PATH": "localhost"
+      }
+    }
+  }
+}
