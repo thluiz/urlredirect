@@ -10,7 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace UrlRedirect {
-    class RedirectService : IHostedService {
+    class RedirectService : IHostedService, IDisposable {
         private static Dictionary<string, string> Redirects = new Dictionary<string, string>();
 
         private WebServer ServerInstance { get; set; }
@@ -24,12 +24,8 @@ namespace UrlRedirect {
             return ServerInstance.RunAsync();
         }
 
-        public Task StopAsync(CancellationToken cancellationToken) {            
-            if(ServerInstance != null)
-                ServerInstance.Dispose();
-
-            if (Redirects != null)
-                Redirects = null;
+        public Task StopAsync(CancellationToken cancellationToken) {
+            Dispose();
 
             return Task.CompletedTask;
         }
@@ -122,6 +118,14 @@ namespace UrlRedirect {
 
         private string WriteHtmlRedirect(string redirectURL) {
             return $"<html><head><meta http-equiv=\"refresh\" content=\"0; URL = {redirectURL}\" /></head><body><script>location.href = \"{redirectURL}\";</script></body></html>";
+        }
+
+        public void Dispose() {
+            if (ServerInstance != null)
+                ServerInstance.Dispose();
+
+            if (Redirects != null)
+                Redirects = null;
         }
     }
 }
