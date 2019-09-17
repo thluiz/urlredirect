@@ -49,8 +49,8 @@ namespace UrlRedirect {
                 connection.Open();
                 var reader = cmd.ExecuteReader();
                 while (reader.Read()) {
-                    var url = reader["url"].ToString().Trim();
-                    var target = reader["target"].ToString().Trim();
+                    var url = reader["url"].ToString().Trim().ToLowerInvariant();
+                    var target = reader["target"].ToString().Trim().ToLowerInvariant();
 
                     if (!Redirects.ContainsKey(url)) {
                         Redirects.Add(url, target);
@@ -75,13 +75,11 @@ namespace UrlRedirect {
         }
 
         private WebServer CreateWebServer() {
-            var baseUrl = Environment.GetEnvironmentVariable("BASE_URL");
-
             var server = new WebServer(o => o
                 .WithUrlPrefix($"http://*:{Environment.GetEnvironmentVariable("PORT")}")
                 .WithMode(HttpListenerMode.EmbedIO))
                 .WithModule(new ActionModule("/healthcheck", HttpVerbs.Any,
-                    ctx => {                        
+                    ctx => {
                         return ctx.SendStringAsync("Ok", "text", Encoding.ASCII);
                     })
                 )
@@ -99,7 +97,7 @@ namespace UrlRedirect {
                                         requestHost.Substring(0, idx)
                                         : "*";
 
-                        var redirectURL = Redirects.ContainsKey(subdomain) ?
+                        var redirectURL = Redirects.ContainsKey(subdomain.Trim().ToLowerInvariant()) ?
                                             Redirects[subdomain]
                                             : Redirects["*"];
 

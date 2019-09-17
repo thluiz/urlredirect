@@ -4,13 +4,9 @@ using System.Threading.Tasks;
 
 namespace UrlRedirect {
     class Program {
-        
-        static async Task Main(string[] args) {
-            var baseUrl = "myvtmi.im";
 
-            if (args.Length > 0)
-                baseUrl = args[0];
-            
+        static async Task Main(string[] args) {
+
             var hostBuilder = new HostBuilder()
                 .ConfigureServices((hostContext, services) => {
                     services.AddSingleton<IHostedService, RedirectService>();
