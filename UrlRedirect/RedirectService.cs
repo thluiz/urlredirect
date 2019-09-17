@@ -93,7 +93,7 @@ namespace UrlRedirect {
                 ).WithModule(new ActionModule("/", HttpVerbs.Any,
                     ctx => {
                         var requestHost = ctx.Request.Url.Host;
-                        var idx = requestHost.IndexOf($".{baseUrl}");
+                        var idx = requestHost.LastIndexOf(".");
 
                         var subdomain = idx > 0 ?
                                         requestHost.Substring(0, idx)
