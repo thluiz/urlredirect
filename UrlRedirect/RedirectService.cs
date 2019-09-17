@@ -90,14 +90,19 @@ namespace UrlRedirect {
                     })
                 ).WithModule(new ActionModule("/", HttpVerbs.Any,
                     ctx => {
-                        var requestHost = ctx.Request.Url.Host;
-                        var idx = requestHost.LastIndexOf(".");
+                        var requestHost = ctx.Request.Url.Host.ToString().ToLowerInvariant();
+                        var idx = requestHost
+                                    .Replace(".com", "")
+                                    .Replace(".im", "")
+                                    .Replace(".net", "")
+                                    .Replace(".com.br", "")
+                                    .LastIndexOf(".");
 
                         var subdomain = idx > 0 ?
                                         requestHost.Substring(0, idx)
                                         : "*";
 
-                        var redirectURL = Redirects.ContainsKey(subdomain.Trim().ToLowerInvariant()) ?
+                        var redirectURL = Redirects.ContainsKey(subdomain.Trim()) ?
                                             Redirects[subdomain]
                                             : Redirects["*"];
 
