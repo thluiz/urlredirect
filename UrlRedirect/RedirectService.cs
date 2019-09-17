@@ -50,7 +50,7 @@ namespace UrlRedirect {
                 var reader = cmd.ExecuteReader();
                 while (reader.Read()) {
                     var url = reader["url"].ToString().Trim().ToLowerInvariant();
-                    var target = reader["target"].ToString().Trim().ToLowerInvariant();
+                    var target = reader["target"].ToString().Trim();
 
                     if (!Redirects.ContainsKey(url)) {
                         Redirects.Add(url, target);
